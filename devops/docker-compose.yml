@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  postgres-db:
+    image: postgres:15
+    container_name: datahub-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=datahub
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=datahub_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - datahub-net
+
+volumes:
+  postgres_data:
+
+# THIS BLOCK IS THE FIX. IT MUST HAVE ZERO INDENTATION.
+networks:
+  datahub-net:
+    external: true

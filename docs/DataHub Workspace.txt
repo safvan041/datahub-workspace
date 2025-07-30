@@ -1,0 +1,126 @@
+
+Project Requirements Document: DataHub Workspace
+Version: 1.0
+
+Date: July 29, 2025
+
+Author: Safwan
+
+Status: Draft
+
+1. Vision & Introduction
+DataHub Workspace is a collaborative, version-controlled platform designed to streamline the most time-consuming part of machine learning: data preparation. By applying the principles of open-source software development (like version control, branching, and pull requests) to datasets, we empower data scientists and ML engineers to collaboratively clean, label, and enrich data, creating high-quality, transparent, and reproducible assets for training AI models.
+
+2. The Problem
+It is widely cited that data scientists spend up to 80% of their time finding, cleaning, and organizing data. This process is typically a solo effort, lacking transparency, versioning, and reusability. This leads to duplicated work, inconsistent datasets, and a major bottleneck in the AI development lifecycle. DataHub Workspace aims to solve this by transforming data preparation into a systematic, collaborative, and community-driven effort.
+
+3. Target Audience (User Personas)
+Priya, the Data Scientist (Contributor): Priya wants to build a strong portfolio and practice her data cleaning skills on real-world problems. She needs a platform to showcase her expertise and discover interesting datasets.
+
+Raj, the ML Engineer (Project Owner): Raj works for a startup and needs high-quality data to train their production models. He is tired of the manual, ad-hoc cleaning process and needs a reliable, auditable way to manage his team's data assets.
+
+Anjali, the Student (Learner): Anjali is learning data science and wants to gain practical experience beyond textbook examples. She wants to contribute to real projects to understand the nuances of data preparation.
+
+4. Core Features (Minimum Viable Product - MVP)
+The MVP will focus on delivering the core collaborative workflow for tabular data (CSV files).
+
+4.1. User & Profile Management
+
+Secure user registration and login (OAuth 2.0 with Google/GitHub).
+
+User profiles showcasing contribution history, statistics, and areas of interest.
+
+4.2. Data Repositories
+
+Users can create public data repositories.
+
+Ability to upload an initial dataset (CSV format).
+
+A README.md file (using Markdown) to describe the dataset.
+
+A GOAL.md file to define the project's cleaning objectives.
+
+4.3. Version Control & Workflow
+
+Branching: Users can create a new "branch" of a dataset to work on changes in isolation.
+
+Committing Changes: After running a cleaning script, a user can "commit" the changes, which versions the new state of the data.
+
+Cleaning Requests (CRs): Similar to a Pull Request on GitHub. A user can submit their branch of cleaned data back to the main repository. The CR includes a title, description of changes, and a "data diff."
+
+Data Diff Viewer: A simple text-based or tabular view showing rows/columns that were added, removed, or modified.
+
+Review & Merge: The repository owner can review the changes, comment, and merge the CR, updating the main dataset to the new version.
+
+4.4. Sandboxed Script Execution
+
+Ability to upload and run a Python cleaning script (using Pandas) associated with a commit.
+
+Scripts will be executed in a secure, isolated Docker container to prevent security risks.
+
+5. Non-Functional Requirements (NFRs)
+Security:
+
+All web traffic must be encrypted with TLS 1.3 (HTTPS).
+
+Data at rest must be encrypted using AES-256.
+
+Strict sandboxing for all user-submitted code execution.
+
+Password hashing and secure authentication practices are mandatory.
+
+Scalability:
+
+The platform must handle concurrent users and asynchronous job processing.
+
+MVP will support datasets up to 1 GB.
+
+Performance:
+
+Core web pages should load in under 2 seconds.
+
+Validation jobs for MVP-sized datasets should complete within 5 minutes.
+
+Usability:
+
+The user interface must be clean, intuitive, and familiar to anyone who has used GitHub.
+
+6. Proposed Technology Stack
+Frontend: React (with Next.js)
+
+Backend: Go / Java (Spring Boot)
+
+Data Processing Engine: Python (with Pandas, Dask)
+
+Job Queuing: RabbitMQ
+
+Sandboxing: Docker
+
+Primary Database: PostgreSQL
+
+Data Storage: S3-compatible Object Storage (e.g., AWS S3, MinIO)
+
+Data Versioning Framework: DVC (Data Version Control) principles
+
+Infrastructure: Kubernetes (K8s) and Terraform
+
+7. High-Level Architecture
+The platform will operate on a microservices-based architecture. A user interacts with the React Frontend, which communicates with the Backend API. The backend manages metadata in PostgreSQL and large data files in Object Storage. When a user submits a cleaning script, the job is pushed to RabbitMQ. A pool of Python Workers listens for jobs, spins up a Docker Container to execute the script securely, and reports the results back to the user via the backend.
+
+8. Future Roadmap (Post-MVP)
+Phase 1 (Enhancing Core): Interactive cleaning notebooks, advanced data visualizations, support for more data formats (Images, Text, Parquet).
+
+Phase 2 (Ecosystem Expansion): Feature Store integration, model training hooks, synthetic data generation.
+
+Phase 3 (AI-Powered Future): AutoClean AI for suggesting cleaning scripts, natural language data discovery, automated bias detection.
+
+9. Success Metrics (KPIs)
+Activation: Number of weekly active users.
+
+Engagement: Number of Cleaning Requests created and merged per week.
+
+Adoption: Number of new data repositories created.
+
+Retention: Percentage of users who return after their first contribution.
+
+

@@ -1,0 +1,117 @@
+Project Specification Document: DataHub Workspace
+Version: 2.0 (Detailed Specification)
+
+Date: July 29, 2025
+
+Status: In Review
+
+1. Executive Summary (New Section)
+This document provides detailed technical and functional specifications for the Minimum Viable Product (MVP) of DataHub Workspace. It breaks down high-level features from v1.0 into actionable user stories, UI/UX wireframes, API endpoints, and database schemas. This document will serve as the primary source of truth for the development team during the first build cycle.
+
+2. Detailed User Stories (Expansion of Section 4)
+Each high-level feature from v1.0 is now broken down into specific user stories.
+
+Feature: Data Repositories
+
+Story 1: As Raj (Project Owner), I want to click a "New Repository" button on my dashboard so that I can start a new data cleaning project.
+
+Story 2: As Raj, I must provide a unique name for my repository and a short description so that it's easily identifiable by others.
+
+Story 3: As Raj, I want to upload a CSV file as the initial version of my dataset so that the project has a starting point.
+
+Story 4: As Raj, I want to be able to edit the README.md and GOAL.md files using a simple Markdown editor within the app.
+
+Feature: Collaborative Workflow
+
+Story 5: As Priya (Contributor), I want to "fork" a repository, creating a personal copy where I can experiment safely.
+
+Story 6: As Priya, after making changes with my script, I want to "commit" my changes with a short message describing what I did.
+
+Story 7: As Priya, I want to open a "Cleaning Request" (CR) to propose my changes back to the original repository, providing a clear title and detailed description.
+
+Story 8: As Raj (Project Owner), I want to receive a notification when a new CR is submitted to my repository.
+
+Story 9: As Raj, I want to see a clear "data diff" view that highlights changed rows and columns in red/green so I can quickly assess the impact of a CR.
+
+Story 10: As Raj, I want to write comments on a CR to ask questions or request changes from the contributor.
+
+3. UI/UX Wireframes & Mockups (New Section)
+This section provides visual blueprints for the platform's design.
+
+[Link to Figma/Sketch Project]
+
+Key Screens to be designed:
+
+Dashboard: Shows a list of user's repositories and recent activity.
+
+Repository View: Tabbed interface for Data, README, GOAL, and Cleaning Requests.
+
+Data Diff Viewer: A side-by-side or inline view comparing the dataset before and after the proposed changes.
+
+New Cleaning Request Page: A form to create a CR with fields for title, description, and source/target branches.
+
+4. Detailed Technical Specifications (Expansion of Sections 6 & 7)
+4.1. API Endpoints (RESTful API)
+
+POST /api/v1/repos: Create a new repository.
+
+Body: { "name": "string", "description": "string" }
+
+Response: { "id": "uuid", "name": "string", ... }
+
+GET /api/v1/repos/{repo_id}/crs: List all Cleaning Requests for a repository.
+
+POST /api/v1/repos/{repo_id}/crs: Create a new Cleaning Request.
+
+Body: { "title": "string", "description": "string", "source_branch": "string", "target_branch": "string" }
+
+4.2. Database Schema (PostgreSQL)
+
+SQL
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    avatar_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE repositories (
+    id UUID PRIMARY KEY,
+    owner_id UUID REFERENCES users(id),
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (owner_id, name)
+);
+
+CREATE TABLE cleaning_requests (
+    id SERIAL PRIMARY KEY,
+    repo_id UUID REFERENCES repositories(id),
+    author_id UUID REFERENCES users(id),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(20) NOT NULL, -- e.g., 'OPEN', 'MERGED', 'CLOSED'
+    created_at TIMESTAMPTZ NOT NULL
+);
+4.3. Security Threat Model
+
+Threat: Malicious script execution (e.g., infinite loops, file system access).
+
+Mitigation: Strict Docker sandboxing with no network access, CPU/memory limits, and a timeout for all jobs.
+
+Threat: SQL Injection.
+
+Mitigation: Exclusive use of prepared statements and a trusted ORM (Object-Relational Mapper).
+
+5. MVP Phasing & Prioritization (New Section)
+We will use the MoSCoW method for the MVP.
+
+Must-Have: User login, create repo, upload CSV, run script, create CR, merge CR.
+
+Should-Have: Commenting on CRs, a basic visual data diff.
+
+Could-Have: User profile statistics, repository forking.
+
+Won't-Have (for MVP): Private repositories, support for non-CSV files, interactive notebook environments.

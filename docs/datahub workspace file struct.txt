@@ -1,0 +1,55 @@
+datahub-workspace/
+│
+├── backend-api/                # Spring Boot or Go-based REST API backend
+│   ├── src/
+│   │   └── main/
+│   │       ├── java/com/datahub/  # Java package structure
+│   │       │   ├── auth/          # OAuth2, JWT logic
+│   │       │   ├── user/          # User services
+│   │       │   ├── repo/          # Repository logic
+│   │       │   ├── cr/            # Cleaning request module
+│   │       │   ├── common/        # Utils, constants
+│   │       │   └── config/        # Configs (security, web, etc.)
+│   │       └── resources/
+│   │           ├── application.yml
+│   │           └── templates/
+│   ├── Dockerfile
+│   └── build.gradle / pom.xml
+│
+├── data-engine/                # Python-based script processing engine
+│   ├── app/
+│   │   ├── jobs/               # Job logic (run scripts, generate diffs)
+│   │   ├── workers/            # RabbitMQ consumers
+│   │   ├── models/             # Pydantic schemas for validation
+│   │   ├── services/           # File handling, docker management
+│   │   ├── core/               # Core business logic
+│   │   └── config/             # Settings, environment variables
+│   ├── main.py                 # FastAPI entrypoint
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── .env
+│
+├── frontend/                   # Next.js frontend
+│   ├── pages/                  # App routes
+│   ├── components/             # Reusable UI elements
+│   ├── modules/                # Feature-specific folders (e.g., auth, dashboard)
+│   ├── styles/
+│   ├── public/
+│   ├── utils/                  # API clients, helpers
+│   ├── next.config.js
+│   └── package.json
+│
+├── devops/                     # Infra as code
+│   ├── docker-compose.yml      # For local dev
+│   ├── k8s/                    # Kubernetes manifests (optional)
+│   └── terraform/              # Infra setup for cloud (optional)
+│
+├── shared/                     # Shared config, constants, protocols
+│   └── common/                 # Shared types, status enums, utils
+│
+├── docs/                       # Architecture diagrams, API specs, wireframes
+│
+├── .env                        # Root environment config
+├── .gitignore
+└── README.md
+
