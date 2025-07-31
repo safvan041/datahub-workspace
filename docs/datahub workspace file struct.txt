@@ -29,7 +29,7 @@ datahub-workspace/
 │   ├── requirements.txt
 │   └── .env
 │
-├── frontend/                   # Next.js frontend
+├── frontend/                   # React.js frontend
 │   ├── pages/                  # App routes
 │   ├── components/             # Reusable UI elements
 │   ├── modules/                # Feature-specific folders (e.g., auth, dashboard)
