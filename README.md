@@ -87,6 +87,16 @@ cd frontend
 npm run dev
 The frontend will be running on http://localhost:3000.
 
+#If You Want To Run Both Servers At Once Use This From Project Root
+(for windows)
+    .\start--dev.ps1 
+
+(for linux/macOS)
+    chmod +x start-dev.sh
+then:
+    ./start-dev.sh
+
+
 ## How to Contribute
 We follow a feature-branching Git workflow. All contributions should be made via pull requests.
 
