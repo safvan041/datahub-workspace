@@ -87,7 +87,7 @@ cd frontend
 npm run dev
 The frontend will be running on http://localhost:3000.
 
-#If You Want To Run Both Servers At Once Use This From Project Root
+# If You Want To Run Both Servers At Once Use This From Project Root
 (for windows)
     .\start--dev.ps1 
 
