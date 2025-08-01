@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 public class RepositoryController {
@@ -40,6 +41,20 @@ public class RepositoryController {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
         return dataRepositoryRepository.findByOwnerId(owner.getId());
+    }
+
+    @GetMapping("/api/repos/{repoId}")
+    public DataRepository getRepositoryById(@PathVariable UUID repoId, @AuthenticationPrincipal UserDetails userDetails) {
+        // Find the repository by its ID
+        DataRepository repo = dataRepositoryRepository.findByIdWithOwner(repoId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Repository not found"));
+
+        // Security check: Make sure the logged-in user is the owner
+        if (!repo.getOwner().getUsername().equals(userDetails.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this repository");
+        }
+
+        return repo;
     }
 }
 
