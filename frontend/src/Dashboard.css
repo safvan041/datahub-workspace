@@ -1,0 +1,69 @@
+.dashboard-container {
+  display: flex;
+  color: black;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.navbar {
+  color: black;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logout-button {
+  color: black;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.dashboard-content {
+  padding: 2rem;
+}
+
+.repo-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.repo-item {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  text-align: left;
+}
+
+.repo-item h3 {
+  margin-top: 0;
+}
+
+.error-message {
+  color: red;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
