@@ -1,12 +1,17 @@
 package com.datahub.repo;
 
+import com.datahub.dataset.DatasetFile;
+import com.datahub.dataset.DatasetFileRepository;
+import com.datahub.storage.FileStorageService; // <-- Add import
 import com.datahub.user.User;
 import com.datahub.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity; // <-- Add import
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile; // <-- Add import
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -21,6 +26,13 @@ public class RepositoryController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private FileStorageService fileStorageService; 
+
+    @Autowired
+    private DatasetFileRepository datasetFileRepository; 
+
+    // ... createRepository and getRepositoriesForUser methods are unchanged ...
     @PostMapping("/api/repos")
     @ResponseStatus(HttpStatus.CREATED)
     public DataRepository createRepository(@RequestBody RepoRequest request, @AuthenticationPrincipal UserDetails userDetails) {
@@ -45,23 +57,48 @@ public class RepositoryController {
 
     @GetMapping("/api/repos/{repoId}")
     public DataRepository getRepositoryById(@PathVariable UUID repoId, @AuthenticationPrincipal UserDetails userDetails) {
-        // Find the repository by its ID
         DataRepository repo = dataRepositoryRepository.findByIdWithOwner(repoId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Repository not found"));
 
-        // Security check: Make sure the logged-in user is the owner
         if (!repo.getOwner().getUsername().equals(userDetails.getUsername())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this repository");
         }
 
         return repo;
     }
+
+    // --- THIS IS THE NEW METHOD ---
+    @PostMapping("/api/repos/{repoId}/upload")
+    public ResponseEntity<String> uploadFile(@PathVariable UUID repoId, @RequestParam("file") MultipartFile file, @AuthenticationPrincipal UserDetails userDetails) {
+        DataRepository repo = dataRepositoryRepository.findById(repoId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Repository not found"));
+
+        if (!repo.getOwner().getUsername().equals(userDetails.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to upload to this repository");
+        }
+
+        try {
+            // Save the file to the file system
+            String filePath = fileStorageService.save(file, repoId);
+
+            // Now, save the metadata to the database
+            DatasetFile newFile = new DatasetFile();
+            newFile.setFileName(file.getOriginalFilename());
+            newFile.setFilePath(filePath);
+            newFile.setRepository(repo);
+            datasetFileRepository.save(newFile);
+
+            return ResponseEntity.status(HttpStatus.OK).body("Uploaded the file successfully: " + file.getOriginalFilename());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not upload the file. Error: " + e.getMessage());
+        }
+    }
 }
 
 class RepoRequest {
     private String name;
     private String description;
-
+    // Getters and Setters
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
