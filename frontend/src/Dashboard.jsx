@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link
 import { useAuth } from './context/AuthContext';
-import CreateRepoForm from './components/CreateRepoForm'; // Import the new component
+import CreateRepoForm from './components/CreateRepoForm';
 import './Dashboard.css';
 
 function Dashboard() {
@@ -10,7 +10,7 @@ function Dashboard() {
   const [repositories, setRepositories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showCreateForm, setShowCreateForm] = useState(false); // State to control the form visibility
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const fetchRepos = useCallback(async () => {
     if (!user?.authHeader) return;
@@ -46,7 +46,7 @@ function Dashboard() {
       {showCreateForm && (
         <CreateRepoForm
           onClose={() => setShowCreateForm(false)}
-          onRepoCreated={fetchRepos} // Pass the fetchRepos function to refresh the list
+          onRepoCreated={fetchRepos}
         />
       )}
       <nav className="navbar">
@@ -67,10 +67,13 @@ function Dashboard() {
           <div className="repo-list">
             {repositories.length > 0 ? (
               repositories.map(repo => (
-                <div key={repo.id} className="repo-item">
-                  <h3>{repo.name}</h3>
-                  <p>{repo.description}</p>
-                </div>
+                // This is the updated part
+                <Link to={`/repo/${repo.id}`} key={repo.id} className="repo-item-link">
+                  <div className="repo-item">
+                    <h3>{repo.name}</h3>
+                    <p>{repo.description}</p>
+                  </div>
+                </Link>
               ))
             ) : (
               <p>You haven't created any repositories yet.</p>
