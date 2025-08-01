@@ -11,7 +11,7 @@ Backend: Spring Boot (Java), Go
 
 Data Engine: Python
 
-Frontend: React (Next.js)
+Frontend: React.js
 
 Database: PostgreSQL
 
