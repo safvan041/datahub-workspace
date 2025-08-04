@@ -1,6 +1,6 @@
 .file-viewer-container {
-  display: flex;
   color: black;
+  display: flex;
   flex-direction: column;
   min-height: 100vh;
   background-color: #f0f2f5;
@@ -10,12 +10,55 @@
   padding: 2rem;
 }
 
+.cleaning-section {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.cleaning-section textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.cleaning-section button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #28a745;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.data-display-grid {
+  display: grid;
+  /* This ensures both columns are of equal width */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+  /* This aligns items to the top of the grid cell */
+  align-items: start;
+}
+
+.data-panel h2 {
+  text-align: center;
+  margin-top: 0;
+}
+
 .table-container {
-  margin-top: 2rem;
-  overflow-x: auto; /* Allows horizontal scrolling for wide tables */
+  overflow-x: auto;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 table {
@@ -27,9 +70,12 @@ th, td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid #ddd;
+  white-space: nowrap; /* Prevents text from wrapping */
 }
 
 thead th {
   background-color: #f9fafb;
   font-weight: bold;
+  position: sticky;
+  top: 0;
 }

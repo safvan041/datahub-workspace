@@ -1,0 +1,9 @@
+### Clean a specific file
+# @name cleanFile
+POST http://localhost:8080/api/file/efc9728a-5b3e-4b01-9c0c-b3d66d62177f/clean
+Content-Type: application/json
+Authorization: Basic c2Fmd2FuOnBhc3N3b3JkMTIz
+
+{
+    "script": "df['Full Name'] = df['First Name'] + ' ' + df['Last Name']; df.drop(columns=['First Name', 'Last Name'], inplace=True)"
+}

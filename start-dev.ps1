@@ -9,4 +9,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "Write-Host 'Start
 # 2. Start the Frontend Server in a new window
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "Write-Host 'Starting Frontend...'; cd frontend; npm run dev"
 
+# 3. Start the Data Emgine Server in a new window
+# Start-Process powershell -ArgumentList "-NoExit", "-Command", "Write-Host 'Starting Data-engine...'; cd data-engine; uvicorn main:app --reload --port 8000"
+
 Write-Host "Backend and Frontend servers are starting in separate windows."
