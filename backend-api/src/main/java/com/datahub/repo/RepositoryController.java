@@ -2,16 +2,16 @@ package com.datahub.repo;
 
 import com.datahub.dataset.DatasetFile;
 import com.datahub.dataset.DatasetFileRepository;
-import com.datahub.storage.FileStorageService; // <-- Add import
+import com.datahub.storage.FileStorageService;
 import com.datahub.user.User;
 import com.datahub.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity; // <-- Add import
+import org.springframework.http.ResponseEntity; 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile; // <-- Add import
+import org.springframework.web.multipart.MultipartFile; 
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -92,6 +92,12 @@ public class RepositoryController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not upload the file. Error: " + e.getMessage());
         }
+    }
+    @GetMapping("/api/repos/{repoId}/files")
+    public List<DatasetFile> getFilesForRepository(@PathVariable UUID repoId, @AuthenticationPrincipal UserDetails userDetails) {
+      DataRepository repo = getRepositoryFiles(repoId, userDetails);
+
+        return datasetFileRepository.findByRepositoryId(repo.getId);
     }
 }
 
