@@ -13,7 +13,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,14 +43,14 @@ public class DatasetFileController {
         return fileStorageService.readCsv(file.getFilePath());
     }
 
-    // --- THIS IS THE NEW ENDPOINT ---
+    // --- THIS IS THE CORRECTED METHOD ---
     @PostMapping("/api/files/{fileId}/clean")
-    public String cleanFile(
+    public Object cleanFile( // Changed return type from String to Object
         @PathVariable UUID fileId,
         @RequestBody CleaningRequestBody body,
         @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // 1. Security check: Ensure user owns the file
+        // 1. Security check
         DatasetFile file = datasetFileRepository.findByIdWithRepoAndOwner(fileId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found"));
 
@@ -64,7 +63,6 @@ public class DatasetFileController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        // Create the request body for the Python service
         Map<String, String> requestBody = Map.of(
             "file_path", file.getFilePath(),
             "script_content", body.getScript()
@@ -72,12 +70,12 @@ public class DatasetFileController {
 
         HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
 
-        // 3. Call the Python service and return its response
-        return restTemplate.postForObject(dataEngineUrl, request, String.class);
+        // 3. Call the Python service and return its response as an Object
+        // This tells Spring to correctly handle the JSON
+        return restTemplate.postForObject(dataEngineUrl, request, Object.class);
     }
 }
 
-// A simple class to represent the incoming request body
 class CleaningRequestBody {
     private String script;
     public String getScript() { return script; }
