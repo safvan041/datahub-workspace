@@ -31,3 +31,8 @@
   border-radius: 4px;
   margin-bottom: 0.5rem;
 }
+
+.file-item-link {
+  text-decoration: none;
+  color: inherit;
+}

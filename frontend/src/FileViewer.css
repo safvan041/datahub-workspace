@@ -1,0 +1,35 @@
+.file-viewer-container {
+  display: flex;
+  color: black;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.file-viewer-content {
+  padding: 2rem;
+}
+
+.table-container {
+  margin-top: 2rem;
+  overflow-x: auto; /* Allows horizontal scrolling for wide tables */
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+thead th {
+  background-color: #f9fafb;
+  font-weight: bold;
+}

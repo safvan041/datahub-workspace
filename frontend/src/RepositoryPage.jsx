@@ -16,14 +16,12 @@ function RepositoryPage() {
     if (!user?.authHeader) return;
     setLoading(true);
     try {
-      // Fetch repository details
       const repoResponse = await fetch(`http://localhost:8080/api/repos/${repoId}`, {
         headers: { 'Authorization': user.authHeader },
       });
       const repoData = await repoResponse.json();
       setRepo(repoData);
 
-      // Fetch repository files
       const filesResponse = await fetch(`http://localhost:8080/api/repos/${repoId}/files`, {
         headers: { 'Authorization': user.authHeader },
       });
@@ -62,7 +60,7 @@ function RepositoryPage() {
 
       if (response.ok) {
         alert("File uploaded successfully!");
-        fetchRepoData(); // Refresh the file list
+        fetchRepoData();
         setSelectedFile(null);
       } else {
         alert("File upload failed.");
@@ -95,9 +93,12 @@ function RepositoryPage() {
             <div className="file-list">
               {files.length > 0 ? (
                 files.map(file => (
-                  <div key={file.id} className="file-item">
-                    {file.fileName}
-                  </div>
+                  // This is the updated part
+                  <Link to={`/file/${file.id}/view`} key={file.id} className="file-item-link">
+                    <div className="file-item">
+                      {file.fileName}
+                    </div>
+                  </Link>
                 ))
               ) : (
                 <p>No files uploaded to this repository yet.</p>

@@ -3,6 +3,7 @@ import Login from './Login';
 import Register from './Register';
 import Dashboard from './Dashboard';
 import RepositoryPage from './RepositoryPage';
+import FileViewer from './FileViewer';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
@@ -20,6 +21,11 @@ function App() {
       <Route path='/repo/:repoId' element={
         <ProtectedRoute>
           <RepositoryPage />
+        </ProtectedRoute>
+      } />
+      <Route path='/file/:fileId/view' element={
+        <ProtectedRoute>
+          <FileViewer />
         </ProtectedRoute>
       } />
     </Routes>
