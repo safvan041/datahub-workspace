@@ -7,11 +7,11 @@ import com.datahub.user.User;
 import com.datahub.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity; 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile; 
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -27,12 +27,11 @@ public class RepositoryController {
     private UserRepository userRepository;
 
     @Autowired
-    private FileStorageService fileStorageService; 
-
+    private FileStorageService fileStorageService;
+    
     @Autowired
-    private DatasetFileRepository datasetFileRepository; 
+    private DatasetFileRepository datasetFileRepository;
 
-    // ... createRepository and getRepositoriesForUser methods are unchanged ...
     @PostMapping("/api/repos")
     @ResponseStatus(HttpStatus.CREATED)
     public DataRepository createRepository(@RequestBody RepoRequest request, @AuthenticationPrincipal UserDetails userDetails) {
@@ -51,10 +50,10 @@ public class RepositoryController {
     public List<DataRepository> getRepositoriesForUser(@AuthenticationPrincipal UserDetails userDetails) {
         User owner = userRepository.findByUsername(userDetails.getUsername())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-
+        
         return dataRepositoryRepository.findByOwnerId(owner.getId());
     }
-
+    
     @GetMapping("/api/repos/{repoId}")
     public DataRepository getRepositoryById(@PathVariable UUID repoId, @AuthenticationPrincipal UserDetails userDetails) {
         DataRepository repo = dataRepositoryRepository.findByIdWithOwner(repoId)
@@ -67,7 +66,6 @@ public class RepositoryController {
         return repo;
     }
 
-    // --- THIS IS THE NEW METHOD ---
     @PostMapping("/api/repos/{repoId}/upload")
     public ResponseEntity<String> uploadFile(@PathVariable UUID repoId, @RequestParam("file") MultipartFile file, @AuthenticationPrincipal UserDetails userDetails) {
         DataRepository repo = dataRepositoryRepository.findById(repoId)
@@ -76,12 +74,10 @@ public class RepositoryController {
         if (!repo.getOwner().getUsername().equals(userDetails.getUsername())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to upload to this repository");
         }
-
+        
         try {
-            // Save the file to the file system
             String filePath = fileStorageService.save(file, repoId);
 
-            // Now, save the metadata to the database
             DatasetFile newFile = new DatasetFile();
             newFile.setFileName(file.getOriginalFilename());
             newFile.setFilePath(filePath);
@@ -93,14 +89,18 @@ public class RepositoryController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not upload the file. Error: " + e.getMessage());
         }
     }
-    @GetMapping("/api/repos/{repoId}/files")
-    public List<DatasetFile> getFilesForRepository(@PathVariable UUID repoId, @AuthenticationPrincipal UserDetails userDetails) {
-      DataRepository repo = getRepositoryFiles(repoId, userDetails);
 
-        return datasetFileRepository.findByRepositoryId(repo.getId);
+    @GetMapping("/api/repos/{repoId}/files")
+    public List<DatasetFile> getRepositoryFiles(@PathVariable UUID repoId, @AuthenticationPrincipal UserDetails userDetails) {
+        // First, use the existing method to verify ownership, which handles security
+        DataRepository repo = this.getRepositoryById(repoId, userDetails);
+        
+        // Then, return the files for that repository
+        return datasetFileRepository.findByRepositoryId(repo.getId());
     }
 }
 
+// This class can stay in the same file for simplicity
 class RepoRequest {
     private String name;
     private String description;

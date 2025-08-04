@@ -1,39 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import './RepositoryPage.css';
 
 function RepositoryPage() {
-  const { repoId } = useParams(); // Gets the ID from the URL
+  const { repoId } = useParams();
   const { user } = useAuth();
   const [repo, setRepo] = useState(null);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const fetchRepoData = useCallback(async () => {
+    if (!user?.authHeader) return;
+    setLoading(true);
+    try {
+      // Fetch repository details
+      const repoResponse = await fetch(`http://localhost:8080/api/repos/${repoId}`, {
+        headers: { 'Authorization': user.authHeader },
+      });
+      const repoData = await repoResponse.json();
+      setRepo(repoData);
+
+      // Fetch repository files
+      const filesResponse = await fetch(`http://localhost:8080/api/repos/${repoId}/files`, {
+        headers: { 'Authorization': user.authHeader },
+      });
+      const filesData = await filesResponse.json();
+      setFiles(filesData);
+
+    } catch (err) {
+      setError('Could not connect to the server.');
+    } finally {
+      setLoading(false);
+    }
+  }, [repoId, user]);
 
   useEffect(() => {
-    const fetchRepo = async () => {
-      if (!user?.authHeader) return;
+    fetchRepoData();
+  }, [fetchRepoData]);
 
-      try {
-        const response = await fetch(`http://localhost:8080/api/repos/${repoId}`, {
-          headers: { 'Authorization': user.authHeader },
-        });
+  const handleFileSelect = (event) => {
+    setSelectedFile(event.target.files[0]);
+  };
 
-        if (response.ok) {
-          const data = await response.json();
-          setRepo(data);
-        } else {
-          setError('Failed to fetch repository details.');
-        }
-      } catch (err) {
-        setError('Could not connect to the server.');
-      } finally {
-        setLoading(false);
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      alert("Please select a file first.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/repos/${repoId}/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': user.authHeader },
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert("File uploaded successfully!");
+        fetchRepoData(); // Refresh the file list
+        setSelectedFile(null);
+      } else {
+        alert("File upload failed.");
       }
-    };
-
-    fetchRepo();
-  }, [repoId, user]);
+    } catch (err) {
+      alert("An error occurred during upload.");
+    }
+  };
 
   return (
     <div className="repo-page-container">
@@ -47,7 +84,25 @@ function RepositoryPage() {
           <div>
             <h1>{repo.name}</h1>
             <p className="repo-description">{repo.description}</p>
-            <p className="repo-owner">Owned by: {repo.owner.username}</p>
+            <hr />
+            <div className="upload-section">
+              <h2>Upload New Dataset</h2>
+              <input type="file" onChange={handleFileSelect} />
+              <button onClick={handleUpload} disabled={!selectedFile}>Upload</button>
+            </div>
+            <hr />
+            <h2>Uploaded Files</h2>
+            <div className="file-list">
+              {files.length > 0 ? (
+                files.map(file => (
+                  <div key={file.id} className="file-item">
+                    {file.fileName}
+                  </div>
+                ))
+              ) : (
+                <p>No files uploaded to this repository yet.</p>
+              )}
+            </div>
           </div>
         )}
       </main>

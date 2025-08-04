@@ -22,4 +22,10 @@ public class DataRepository {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
+
+    // --- THIS IS THE FIX ---
+    // Manually add the getter for the ID
+    public UUID getId() {
+        return this.id;
+    }
 }

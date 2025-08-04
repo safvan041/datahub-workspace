@@ -19,3 +19,15 @@
   font-style: italic;
   color: #777;
 }
+
+.upload-section, .file-list {
+  margin-top: 2rem;
+}
+
+.file-item {
+  background-color: #fff;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
