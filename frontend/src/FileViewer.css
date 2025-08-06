@@ -95,3 +95,61 @@ thead th {
   font-size: 1rem;
   cursor: pointer;
 }
+
+
+.main-grid {
+    display: grid;
+    grid-template-columns: 3fr 1fr; /* 75% for main content, 25% for history */
+    gap: 2rem;
+    align-items: start;
+}
+
+.cleaning-and-data-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.history-panel {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    height: 80vh;
+    overflow-y: auto;
+}
+
+.commit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.commit-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.commit-message {
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.commit-script {
+    background-color: #f9fafb;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.commit-date {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 0;
+    margin-top: 0.5rem;
+}
