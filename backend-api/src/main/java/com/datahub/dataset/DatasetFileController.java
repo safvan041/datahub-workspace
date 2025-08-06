@@ -25,13 +25,13 @@ public class DatasetFileController {
     private DatasetFileRepository datasetFileRepository;
 
     @Autowired
+    private DataCommitRepository dataCommitRepository;
+
+    @Autowired
     private FileStorageService fileStorageService;
 
     @Autowired
     private RestTemplate restTemplate;
-
-    @Autowired
-    private DataCommitRepository dataCommitRepository;
 
     @GetMapping("/api/files/{fileId}/view")
     public List<Map<String, String>> viewFileContent(
@@ -46,15 +46,13 @@ public class DatasetFileController {
         }
         return fileStorageService.readCsv(file.getFilePath());
     }
-
-    // --- THIS IS THE CORRECTED METHOD ---
+    
     @PostMapping("/api/files/{fileId}/clean")
-    public Object cleanFile( // Changed return type from String to Object
+    public Object cleanFile(
         @PathVariable UUID fileId,
         @RequestBody CleaningRequestBody body,
         @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // 1. Security check
         DatasetFile file = datasetFileRepository.findByIdWithRepoAndOwner(fileId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found"));
 
@@ -62,7 +60,6 @@ public class DatasetFileController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to clean this file");
         }
 
-        // 2. Prepare the request to the Python data-engine
         String dataEngineUrl = "http://localhost:8000/clean";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -73,9 +70,7 @@ public class DatasetFileController {
         );
 
         HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
-
-        // 3. Call the Python service and return its response as an Object
-        // This tells Spring to correctly handle the JSON
+        
         return restTemplate.postForObject(dataEngineUrl, request, Object.class);
     }
 
@@ -85,7 +80,6 @@ public class DatasetFileController {
         @RequestBody CommitRequestBody body,
         @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // 1. Security check: Ensure user owns the file
         DatasetFile originalFile = datasetFileRepository.findByIdWithRepoAndOwner(fileId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found"));
 
@@ -93,7 +87,6 @@ public class DatasetFileController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to commit to this file");
         }
 
-        // 2. Call the Python data-engine to get the cleaned data as a string
         String dataEngineUrl = "http://localhost:8000/clean";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -102,17 +95,14 @@ public class DatasetFileController {
             "script_content", body.getScript()
         );
         HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
-        // We get the raw JSON string back
         String cleanedDataJson = restTemplate.postForObject(dataEngineUrl, request, String.class);
-
-        // 3. Save the cleaned data to a new versioned file
+        
         String newFilePath = fileStorageService.saveCleanedData(
             cleanedDataJson, 
             originalFile.getRepository().getId(), 
             originalFile.getFileName()
         );
 
-        // 4. Create and save the commit metadata to the database
         DataCommit newCommit = new DataCommit();
         newCommit.setCommitMessage(body.getCommitMessage());
         newCommit.setScriptContent(body.getScript());
@@ -122,21 +112,38 @@ public class DatasetFileController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(savedCommit);
     }
+    
+    // --- THIS IS THE NEW ENDPOINT ---
+    @GetMapping("/api/files/{fileId}/commits")
+    public List<DataCommit> getCommitHistory(
+        @PathVariable UUID fileId,
+        @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        // 1. First, verify the user owns the original file
+        DatasetFile originalFile = datasetFileRepository.findByIdWithRepoAndOwner(fileId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found"));
+
+        if (!originalFile.getRepository().getOwner().getUsername().equals(userDetails.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this file's history");
+        }
+
+        // 2. Return the list of commits for that file
+        return dataCommitRepository.findByOriginalFileIdOrderByCreatedAtDesc(fileId);
+    }
+}
+
+// DTO Classes
+class CommitRequestBody {
+    private String script;
+    private String commitMessage;
+    public String getScript() { return script; }
+    public void setScript(String script) { this.script = script; }
+    public String getCommitMessage() { return commitMessage; }
+    public void setCommitMessage(String commitMessage) { this.commitMessage = commitMessage; }
 }
 
 class CleaningRequestBody {
     private String script;
     public String getScript() { return script; }
     public void setScript(String script) { this.script = script; }
-}
-
-class CommitRequestBody {
-    private String script;
-    private String commitMessage;
-
-    public String getScript() { return script; }
-    public void setScript(String script) { this.script = script; }
-
-    public String getCommitMessage() { return commitMessage; }
-    public void setCommitMessage(String commitMessage) { this.commitMessage = commitMessage; }
 }
