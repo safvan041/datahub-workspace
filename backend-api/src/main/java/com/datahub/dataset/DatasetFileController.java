@@ -2,11 +2,8 @@ package com.datahub.dataset;
 
 import com.datahub.storage.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -80,6 +77,7 @@ public class DatasetFileController {
         @RequestBody CommitRequestBody body,
         @AuthenticationPrincipal UserDetails userDetails
     ) {
+        // 1. Security check
         DatasetFile originalFile = datasetFileRepository.findByIdWithRepoAndOwner(fileId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found"));
 
@@ -87,6 +85,7 @@ public class DatasetFileController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to commit to this file");
         }
 
+        // 2. Call the Python data-engine
         String dataEngineUrl = "http://localhost:8000/clean";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -95,14 +94,26 @@ public class DatasetFileController {
             "script_content", body.getScript()
         );
         HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
-        String cleanedDataJson = restTemplate.postForObject(dataEngineUrl, request, String.class);
         
+        // Get the response as a structured List of Maps
+        List<Map<String, Object>> cleanedData = restTemplate.exchange(
+            dataEngineUrl, 
+            HttpMethod.POST, 
+            request, 
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+        ).getBody();
+        
+        // 3. Convert the cleaned JSON data back to a CSV string
+        String csvContent = fileStorageService.convertJsonToCsv(cleanedData);
+
+        // 4. Save the new CSV content to a new versioned file
         String newFilePath = fileStorageService.saveCleanedData(
-            cleanedDataJson, 
+            csvContent, 
             originalFile.getRepository().getId(), 
             originalFile.getFileName()
         );
 
+        // 5. Create and save the commit metadata
         DataCommit newCommit = new DataCommit();
         newCommit.setCommitMessage(body.getCommitMessage());
         newCommit.setScriptContent(body.getScript());
@@ -113,13 +124,11 @@ public class DatasetFileController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedCommit);
     }
     
-    // --- THIS IS THE NEW ENDPOINT ---
     @GetMapping("/api/files/{fileId}/commits")
     public List<DataCommit> getCommitHistory(
         @PathVariable UUID fileId,
         @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // 1. First, verify the user owns the original file
         DatasetFile originalFile = datasetFileRepository.findByIdWithRepoAndOwner(fileId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found"));
 
@@ -127,7 +136,6 @@ public class DatasetFileController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this file's history");
         }
 
-        // 2. Return the list of commits for that file
         return dataCommitRepository.findByOriginalFileIdOrderByCreatedAtDesc(fileId);
     }
 }

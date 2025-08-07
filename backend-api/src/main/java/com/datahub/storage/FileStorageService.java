@@ -63,6 +63,28 @@ public class FileStorageService {
         }
     }
 
+    public String convertJsonToCsv(List<Map<String, Object>> data) {
+        if (data == null || data.isEmpty()) {
+            return "";
+        }
+        StringBuilder csvBuilder = new StringBuilder();
+        // Get headers from the first row
+        Map<String, Object> firstRow = data.get(0);
+        String[] headers = firstRow.keySet().toArray(new String[0]);
+        csvBuilder.append(String.join(",", headers)).append("\n");
+
+        // Add data rows
+        for (Map<String, Object> row : data) {
+            List<String> values = new ArrayList<>();
+            for (String header : headers) {
+                // Handle potential null values and ensure proper string conversion
+                values.add(row.getOrDefault(header, "").toString());
+            }
+            csvBuilder.append(String.join(",", values)).append("\n");
+        }
+        return csvBuilder.toString();
+    }
+
     public List<Map<String, String>> readCsv(String filePath) throws IOException {
         // ... this method is unchanged ...
         List<Map<String, String>> data = new ArrayList<>();
