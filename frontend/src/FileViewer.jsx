@@ -82,7 +82,6 @@ function FileViewer() {
     }
   };
 
-  // --- THIS IS THE NEW FUNCTION ---
   const handleViewCommit = async (commitId) => {
     setLoading(true);
     setError('');
@@ -96,6 +95,14 @@ function FileViewer() {
                 setCleanedHeaders(Object.keys(commitData[0]));
             }
             setCleanedData(commitData);
+
+            // --- THIS IS THE NEW LOGIC ---
+            // Find the full commit object from our history state
+            const selectedCommit = commitHistory.find(c => c.id === commitId);
+            if (selectedCommit) {
+                // Set the script in the editor to this commit's script
+                setScript(selectedCommit.scriptContent);
+            }
         } else {
             setError('Failed to load data for this commit.');
         }
@@ -170,7 +177,6 @@ function FileViewer() {
                 {commitHistory.length > 0 ? (
                     <div className="commit-list">
                         {commitHistory.map(commit => (
-                            // This is the updated part
                             <div key={commit.id} className="commit-item">
                                 <p className="commit-message">{commit.commitMessage}</p>
                                 <pre className="commit-script">{commit.scriptContent}</pre>
@@ -178,7 +184,7 @@ function FileViewer() {
                                     Committed on: {new Date(commit.createdAt).toLocaleString()}
                                 </p>
                                 <button onClick={() => handleViewCommit(commit.id)} className="view-commit-btn">
-                                    View this version
+                                    View & Load Script
                                 </button>
                             </div>
                         ))}
