@@ -11,7 +11,7 @@ function FileViewer() {
   const [cleanedData, setCleanedData] = useState(null);
   const [headers, setHeaders] = useState([]);
   const [cleanedHeaders, setCleanedHeaders] = useState([]);
-  const [commitHistory, setCommitHistory] = useState([]); // State for commit history
+  const [commitHistory, setCommitHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [script, setScript] = useState("df.drop(columns=['Index'], inplace=True)");
@@ -22,7 +22,6 @@ function FileViewer() {
     setLoading(true);
     setError('');
     try {
-      // Fetch file content
       const viewResponse = await fetch(`http://localhost:8080/api/files/${fileId}/view`, {
         headers: { 'Authorization': user.authHeader },
       });
@@ -34,7 +33,6 @@ function FileViewer() {
         throw new Error('Failed to fetch file content');
       }
       
-      // Fetch commit history
       const commitsResponse = await fetch(`http://localhost:8080/api/files/${fileId}/commits`, {
           headers: { 'Authorization': user.authHeader },
       });
@@ -57,7 +55,6 @@ function FileViewer() {
   }, [fetchPageData]);
 
   const handleRunScript = async () => {
-    // ... (this function is unchanged)
     setLoading(true);
     setError('');
     try {
@@ -85,6 +82,30 @@ function FileViewer() {
     }
   };
 
+  // --- THIS IS THE NEW FUNCTION ---
+  const handleViewCommit = async (commitId) => {
+    setLoading(true);
+    setError('');
+    try {
+        const response = await fetch(`http://localhost:8080/api/commits/${commitId}/view`, {
+            headers: { 'Authorization': user.authHeader },
+        });
+        if (response.ok) {
+            const commitData = await response.json();
+            if (commitData.length > 0) {
+                setCleanedHeaders(Object.keys(commitData[0]));
+            }
+            setCleanedData(commitData);
+        } else {
+            setError('Failed to load data for this commit.');
+        }
+    } catch (err) {
+        setError('Could not connect to the server.');
+    } finally {
+        setLoading(false);
+    }
+  };
+
   return (
     <div className="file-viewer-container">
       {showCommitModal && (
@@ -92,7 +113,7 @@ function FileViewer() {
           fileId={fileId}
           script={script}
           onClose={() => setShowCommitModal(false)}
-          onCommitSuccess={fetchPageData} // Refresh all page data on success
+          onCommitSuccess={fetchPageData}
         />
       )}
 
@@ -134,11 +155,11 @@ function FileViewer() {
                     )}
                 </div>
                 <div className="data-panel">
-                    <h2>Cleaned Data</h2>
+                    <h2>Cleaned Data / Version Preview</h2>
                     {cleanedData ? (
                     <DataTable headers={cleanedHeaders} data={cleanedData} />
                     ) : (
-                    <p>Run a script to see the cleaned data.</p>
+                    <p>Run a script or select a commit to see the data.</p>
                     )}
                 </div>
                 </div>
@@ -149,12 +170,16 @@ function FileViewer() {
                 {commitHistory.length > 0 ? (
                     <div className="commit-list">
                         {commitHistory.map(commit => (
+                            // This is the updated part
                             <div key={commit.id} className="commit-item">
                                 <p className="commit-message">{commit.commitMessage}</p>
                                 <pre className="commit-script">{commit.scriptContent}</pre>
                                 <p className="commit-date">
                                     Committed on: {new Date(commit.createdAt).toLocaleString()}
                                 </p>
+                                <button onClick={() => handleViewCommit(commit.id)} className="view-commit-btn">
+                                    View this version
+                                </button>
                             </div>
                         ))}
                     </div>
