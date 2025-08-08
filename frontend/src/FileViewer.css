@@ -20,7 +20,7 @@
 
 .cleaning-section textarea {
   width: 100%;
-  padding: 0.75rem;
+  /* padding: 0.75rem; */
   border: 1px solid #ccc;
   border-radius: 4px;
   font-family: monospace;
@@ -152,4 +152,19 @@ thead th {
     color: #6b7280;
     margin-bottom: 0;
     margin-top: 0.5rem;
+}
+
+.view-commit-btn {
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #28a745;
+    cursor: pointer;
+    width: 100%;
+    color: white;
+}
+
+.view-commit-btn:hover {
+    background-color: #f0f2f5;
 }
