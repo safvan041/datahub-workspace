@@ -7,11 +7,13 @@ import './FileViewer.css';
 function FileViewer() {
   const { fileId } = useParams();
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('data'); // 'data', 'profile'
+  const [profileData, setProfileData] = useState(null);
   const [originalData, setOriginalData] = useState([]);
   const [cleanedData, setCleanedData] = useState(null);
   const [headers, setHeaders] = useState([]);
   const [cleanedHeaders, setCleanedHeaders] = useState([]);
-  const [commitHistory, setCommitHistory] = useState([]); // State for commit history
+  const [commitHistory, setCommitHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [script, setScript] = useState("df.drop(columns=['Index'], inplace=True)");
@@ -56,8 +58,28 @@ function FileViewer() {
     fetchPageData();
   }, [fetchPageData]);
 
+  const fetchProfileData = async () => {
+    if (!user?.authHeader || profileData) return; // Don't re-fetch if already loaded
+    setLoading(true);
+    setError('');
+    try {
+        const response = await fetch(`http://localhost:8080/api/files/${fileId}/profile`, {
+            headers: { 'Authorization': user.authHeader },
+        });
+        if(response.ok) {
+            const data = await response.json();
+            setProfileData(data);
+        } else {
+            setError('Failed to fetch profile data.');
+        }
+    } catch (err) {
+        setError('Could not connect to the server.');
+    } finally {
+        setLoading(false);
+    }
+  };
+
   const handleRunScript = async () => {
-    // ... (this function is unchanged)
     setLoading(true);
     setError('');
     try {
@@ -85,6 +107,33 @@ function FileViewer() {
     }
   };
 
+  const handleViewCommit = async (commitId) => {
+    setLoading(true);
+    setError('');
+    try {
+        const response = await fetch(`http://localhost:8080/api/commits/${commitId}/view`, {
+            headers: { 'Authorization': user.authHeader },
+        });
+        if (response.ok) {
+            const commitData = await response.json();
+            if (commitData.length > 0) {
+                setCleanedHeaders(Object.keys(commitData[0]));
+            }
+            setCleanedData(commitData);
+            const selectedCommit = commitHistory.find(c => c.id === commitId);
+            if (selectedCommit) {
+                setScript(selectedCommit.scriptContent);
+            }
+        } else {
+            setError('Failed to load data for this commit.');
+        }
+    } catch (err) {
+        setError('Could not connect to the server.');
+    } finally {
+        setLoading(false);
+    }
+  };
+
   return (
     <div className="file-viewer-container">
       {showCommitModal && (
@@ -92,7 +141,7 @@ function FileViewer() {
           fileId={fileId}
           script={script}
           onClose={() => setShowCommitModal(false)}
-          onCommitSuccess={fetchPageData} // Refresh all page data on success
+          onCommitSuccess={fetchPageData}
         />
       )}
 
@@ -105,43 +154,102 @@ function FileViewer() {
         
         <div className="main-grid">
             <div className="cleaning-and-data-panel">
-                <div className="cleaning-section">
-                <h2>Cleaning Script (Python/Pandas)</h2>
-                <textarea
-                    value={script}
-                    onChange={(e) => setScript(e.target.value)}
-                    rows="5"
-                    placeholder="Enter your pandas script here. Use 'df' as the DataFrame variable."
-                />
-                <div className="cleaning-actions">
-                    <button type="button" onClick={handleRunScript} disabled={loading}>
-                    {loading ? 'Running...' : 'Run Script'}
-                    </button>
-                    {cleanedData && (
-                    <button type="button" onClick={() => setShowCommitModal(true)} className="btn-commit">
-                        Commit Changes
-                    </button>
-                    )}
-                </div>
+                <div className="tabs">
+                    <button className={`tab-button ${activeTab === 'data' ? 'active' : ''}`} onClick={() => setActiveTab('data')}>Data View</button>
+                    <button className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => { setActiveTab('profile'); fetchProfileData(); }}>Profile View</button>
                 </div>
 
-                <div className="data-display-grid">
-                <div className="data-panel">
-                    <h2>Original Data</h2>
-                    {loading && <p>Loading...</p>}
-                    {!loading && originalData.length > 0 && (
-                    <DataTable headers={headers} data={originalData} />
-                    )}
-                </div>
-                <div className="data-panel">
-                    <h2>Cleaned Data</h2>
-                    {cleanedData ? (
-                    <DataTable headers={cleanedHeaders} data={cleanedData} />
-                    ) : (
-                    <p>Run a script to see the cleaned data.</p>
-                    )}
-                </div>
-                </div>
+                {activeTab === 'data' && (
+                    <>
+                        <div className="cleaning-section">
+                            <h2>Cleaning Script (Python/Pandas)</h2>
+                            <textarea
+                                value={script}
+                                onChange={(e) => setScript(e.target.value)}
+                                rows="5"
+                                placeholder="Enter your pandas script here. Use 'df' as the DataFrame variable."
+                            />
+                            <div className="cleaning-actions">
+                                <button type="button" onClick={handleRunScript} disabled={loading}>
+                                {loading ? 'Running...' : 'Run Script'}
+                                </button>
+                                {cleanedData && (
+                                <button type="button" onClick={() => setShowCommitModal(true)} className="btn-commit">
+                                    Commit Changes
+                                </button>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="data-display-grid">
+                            <div className="data-panel">
+                                <h2>Original Data</h2>
+                                {loading && <p>Loading...</p>}
+                                {!loading && originalData.length > 0 && (
+                                <DataTable headers={headers} data={originalData} />
+                                )}
+                            </div>
+                            <div className="data-panel">
+                                <h2>Cleaned Data / Version Preview</h2>
+                                {cleanedData ? (
+                                <DataTable headers={cleanedHeaders} data={cleanedData} />
+                                ) : (
+                                <p>Run a script or select a commit to see the data.</p>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {activeTab === 'profile' && (
+                    <div className="profile-panel">
+                        <h2>Dataset Profile</h2>
+                        {loading && <p>Generating profile...</p>}
+                        {profileData && (
+                            <div>
+                                <h3>General Info</h3>
+                                <p>Rows: {profileData.general_info.rows} | Columns: {profileData.general_info.columns}</p>
+                                <h3>Column Details</h3>
+                                <div className="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Dtype</th>
+                                                <th>Null_Count</th>
+                                                <th>count</th>
+                                                <th>mean</th>
+                                                <th>std</th>
+                                                <th>min</th>
+                                                <th>max</th>
+                                                <th>unique</th>
+                                                <th>top</th>
+                                                <th>freq</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {profileData.column_profiles.map(col => (
+                                                <tr key={col.Column}>
+                                                    <td>{col.Column}</td>
+                                                    <td>{col.Dtype}</td>
+                                                    <td>{col.Null_Count}</td>
+                                                    <td>{col.count}</td>
+                                                    <td>{col.mean}</td>
+                                                    <td>{col.std}</td>
+                                                    <td>{col.min}</td>
+                                                    <td>{col.max}</td>
+                                                    <td>{col.unique}</td>
+                                                    <td>{col.top}</td>
+                                                    <td>{col.freq}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
             
             <div className="history-panel">
@@ -155,6 +263,9 @@ function FileViewer() {
                                 <p className="commit-date">
                                     Committed on: {new Date(commit.createdAt).toLocaleString()}
                                 </p>
+                                <button onClick={() => handleViewCommit(commit.id)} className="view-commit-btn">
+                                    View & Load Script
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -169,7 +280,7 @@ function FileViewer() {
 }
 
 function DataTable({ headers, data }) {
-    if (!data) return null;
+    if (!data || data.length === 0) return <p>No data to display.</p>;
     return (
         <div className="table-container">
         <table>

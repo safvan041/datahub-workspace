@@ -138,6 +138,32 @@ public class DatasetFileController {
 
         return dataCommitRepository.findByOriginalFileIdOrderByCreatedAtDesc(fileId);
     }
+
+    @GetMapping("/api/files/{fileId}/profile")
+    public Object getProfile(
+        @PathVariable UUID fileId,
+        @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        // 1. Security check: Ensure user owns the file
+        DatasetFile file = datasetFileRepository.findByIdWithRepoAndOwner(fileId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found"));
+
+        if (!file.getRepository().getOwner().getUsername().equals(userDetails.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to profile this file");
+        }
+
+        // 2. Prepare the request to the Python data-engine
+        String dataEngineUrl = "http://localhost:8000/profile";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Create the request body for the Python service
+        Map<String, String> requestBody = Map.of("file_path", file.getFilePath());
+        HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
+
+        // 3. Call the Python service and return its response
+        return restTemplate.postForObject(dataEngineUrl, request, Object.class);
+    }
 }
 
 // DTO Classes
