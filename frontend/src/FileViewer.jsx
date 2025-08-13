@@ -4,10 +4,18 @@ import { useAuth } from './context/AuthContext';
 import CommitModal from './components/CommitModal';
 import './FileViewer.css';
 
+const PAGE_SIZE = 50; // Number of rows to fetch per page
+
 function FileViewer() {
   const { fileId } = useParams();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('data'); // 'data', 'profile'
+  
+  // State for pagination
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // All other existing states
+  const [activeTab, setActiveTab] = useState('data');
   const [profileData, setProfileData] = useState(null);
   const [originalData, setOriginalData] = useState([]);
   const [cleanedData, setCleanedData] = useState(null);
@@ -24,14 +32,15 @@ function FileViewer() {
     setLoading(true);
     setError('');
     try {
-      // Fetch file content
-      const viewResponse = await fetch(`http://localhost:8080/api/files/${fileId}/view`, {
+      // Fetch paginated file content
+      const viewResponse = await fetch(`http://localhost:8080/api/files/${fileId}/view/paginated?page=${currentPage}&size=${PAGE_SIZE}`, {
         headers: { 'Authorization': user.authHeader },
       });
       const viewData = await viewResponse.json();
       if (viewResponse.ok) {
-        if (viewData.length > 0) setHeaders(Object.keys(viewData[0]));
-        setOriginalData(viewData);
+        if (viewData.data.length > 0) setHeaders(Object.keys(viewData.data[0]));
+        setOriginalData(viewData.data);
+        setTotalPages(Math.ceil(viewData.total_rows / PAGE_SIZE));
       } else {
         throw new Error('Failed to fetch file content');
       }
@@ -52,14 +61,14 @@ function FileViewer() {
     } finally {
       setLoading(false);
     }
-  }, [fileId, user]);
+  }, [fileId, user, currentPage]);
 
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData]);
 
   const fetchProfileData = async () => {
-    if (!user?.authHeader || profileData) return; // Don't re-fetch if already loaded
+    if (!user?.authHeader || profileData) return;
     setLoading(true);
     setError('');
     try {
@@ -186,7 +195,18 @@ function FileViewer() {
                                 <h2>Original Data</h2>
                                 {loading && <p>Loading...</p>}
                                 {!loading && originalData.length > 0 && (
-                                <DataTable headers={headers} data={originalData} />
+                                  <>
+                                    <DataTable headers={headers} data={originalData} />
+                                    <div className="pagination-controls">
+                                      <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 0}>
+                                        Previous
+                                      </button>
+                                      <span>Page {currentPage + 1} of {totalPages}</span>
+                                      <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage + 1 >= totalPages}>
+                                        Next
+                                      </button>
+                                    </div>
+                                  </>
                                 )}
                             </div>
                             <div className="data-panel">
