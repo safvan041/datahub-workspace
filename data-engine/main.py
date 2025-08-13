@@ -61,3 +61,32 @@ def get_profile(payload: ProfileRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error profiling file: {str(e)}")
+
+
+
+class PaginatedViewRequest(BaseModel):
+    file_path: str
+    page: int
+    size: int
+
+@app.post("/view/paginated")
+def get_paginated_view(payload: PaginatedViewRequest):
+    try:
+        df = pd.read_csv(payload.file_path)
+
+        start_index = payload.page * payload.size
+        end_index = start_index + payload.size
+
+        # Slice the DataFrame to get the requested page
+        paginated_df = df.iloc[start_index:end_index]
+
+        # Get total number of rows for the frontend to calculate total pages
+        total_rows = len(df)
+
+        return {
+            "total_rows": total_rows,
+            "data": json.loads(paginated_df.to_json(orient="records"))
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
