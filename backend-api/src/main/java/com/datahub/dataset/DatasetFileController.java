@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 import java.util.List;
@@ -160,6 +161,38 @@ public class DatasetFileController {
         // Create the request body for the Python service
         Map<String, String> requestBody = Map.of("file_path", file.getFilePath());
         HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
+
+        // 3. Call the Python service and return its response
+        return restTemplate.postForObject(dataEngineUrl, request, Object.class);
+    }
+
+    @GetMapping("/api/files/{fileId}/view/paginated")
+    public Object viewFileContentPaginated(
+        @PathVariable UUID fileId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "50") int size,
+        @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        // 1. Security check: Ensure user owns the file
+        DatasetFile file = datasetFileRepository.findByIdWithRepoAndOwner(fileId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found"));
+
+        if (!file.getRepository().getOwner().getUsername().equals(userDetails.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to view this file");
+        }
+
+        // 2. Prepare the request to the Python data-engine
+        String dataEngineUrl = "http://localhost:8000/view/paginated";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Create the request body for the Python service
+        Map<String, Object> requestBody = Map.of(
+            "file_path", file.getFilePath(),
+            "page", page,
+            "size", size
+        );
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
         // 3. Call the Python service and return its response
         return restTemplate.postForObject(dataEngineUrl, request, Object.class);
