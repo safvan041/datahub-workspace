@@ -52,7 +52,7 @@ function FileViewer() {
         setOriginalData(viewData.data);
         setTotalPages(Math.ceil(viewData.total_rows / PAGE_SIZE));
       } else {
-        throw new Error('Failed to fetch file content');
+        toast.error('Failed to fetch file content.'); // Show error message
       }
       
       // Fetch commit history
@@ -63,11 +63,11 @@ function FileViewer() {
       if(commitsResponse.ok) {
         setCommitHistory(commitsData);
       } else {
-        throw new Error('Failed to fetch commit history');
+        toast.error('Failed to fetch commit history.'); // Show error message
       }
 
     } catch (err) {
-      setError(err.message || 'Could not connect to the server.');
+      toast.error('Could not connect to the server.'); // Show error message
     } finally {
       setLoading(false);
     }
@@ -89,10 +89,10 @@ function FileViewer() {
             const data = await response.json();
             setProfileData(data);
         } else {
-            setError('Failed to fetch profile data.');
+            toast.error('Failed to fetch profile data.'); // Show error message
         }
     } catch (err) {
-        setError('Could not connect to the server.');
+        toast.error('Could not connect to the server.'); // Show error message
     } finally {
         setLoading(false);
     }
@@ -117,10 +117,10 @@ function FileViewer() {
         }
         setCleanedData(cleanedJsonData);
       } else {
-        setError('Failed to execute cleaning script.');
+        toast.error('Failed to run script.'); // Show error message
       }
     } catch (err) {
-      setError('An error occurred while running the script.');
+      toast.error('An error occurred while running the script.');
     } finally {
       setLoading(false);
     }
@@ -144,10 +144,10 @@ function FileViewer() {
                 setScript(selectedCommit.scriptContent);
             }
         } else {
-            setError('Failed to load data for this commit.');
+            toast.error('Failed to load data for this commit.');
         }
     } catch (err) {
-        setError('Could not connect to the server.');
+        toast.error('Could not connect to the server.');
     } finally {
         setLoading(false);
     }
@@ -155,7 +155,7 @@ function FileViewer() {
 
   const handleVisualize = async () => {
     if (!selectedColumn) {
-        toast.error('Please select a column to visualize.');
+        toast.warning('Please select a column to visualize.');
         setVisualizationData(null);
         return;
     }
@@ -181,10 +181,10 @@ function FileViewer() {
                 }]
             });
         } else {
-            setError('Failed to generate visualization.');
+            toast.error('Failed to generate visualization.');
         }
     } catch (err) {
-        setError('Could not connect to the server.');
+        toast.error('Could not connect to the server.');
     } finally {
         setLoading(false);
     }

@@ -46,7 +46,7 @@ function RepositoryPage() {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      alert("Please select a file first.");
+      toast.error('Please select a file to upload.'); // Show error message
       return;
     }
     const formData = new FormData();
@@ -67,15 +67,13 @@ function RepositoryPage() {
         toast.error('File upload failed.'); // Show error message
       }
     } catch (err) {
-      alert("An error occurred during upload.");
+      toast.error('Could not connect to the server.'); // Show error message
     }
   };
 
   return (
     <div className="repo-page-container">
-      <nav className="navbar">
-        <Link to="/dashboard" className="navbar-brand">← Back to Dashboard</Link>
-      </nav>
+
       <main className="repo-page-content">
         {loading && <p>Loading...</p>}
         {error && <p className="error-message">{error}</p>}

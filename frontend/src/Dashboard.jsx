@@ -52,13 +52,7 @@ function Dashboard() {
           onRepoCreated={fetchRepos}
         />
       )}
-      <nav className="navbar">
-        <span className="navbar-brand">DataHub Workspace</span>
-        <div className="navbar-user">
-          <span>{user?.user.username}</span>
-          <button onClick={handleLogout} className="logout-button">Logout</button>
-        </div>
-      </nav>
+
       <main className="dashboard-content">
         <div className="dashboard-header">
           <h1>Your Repositories</h1>
