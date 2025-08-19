@@ -5,6 +5,7 @@ import CommitModal from './components/CommitModal';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import './FileViewer.css';
+import { toast } from 'react-toastify';
 
 // Register the components you will use from Chart.js
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -154,7 +155,8 @@ function FileViewer() {
 
   const handleVisualize = async () => {
     if (!selectedColumn) {
-        alert("Please select a column to visualize.");
+        toast.error('Please select a column to visualize.');
+        setVisualizationData(null);
         return;
     }
     setLoading(true);

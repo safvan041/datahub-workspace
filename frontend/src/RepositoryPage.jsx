@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import './RepositoryPage.css';
+import { toast } from 'react-toastify';
 
 function RepositoryPage() {
   const { repoId } = useParams();
@@ -59,11 +60,11 @@ function RepositoryPage() {
       });
 
       if (response.ok) {
-        alert("File uploaded successfully!");
+        toast.success('File uploaded successfully!'); // Show success message
         fetchRepoData();
         setSelectedFile(null);
       } else {
-        alert("File upload failed.");
+        toast.error('File upload failed.'); // Show error message
       }
     } catch (err) {
       alert("An error occurred during upload.");

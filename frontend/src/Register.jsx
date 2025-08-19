@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Login.css'; // We can reuse the same styles
+import { toast } from 'react-toastify';
 
 function Register() {
   const [username, setUsername] = useState('');
@@ -22,7 +23,8 @@ function Register() {
       });
 
       if (response.ok) {
-        alert('Registration successful! Please log in.');
+        toast.success('Registration successful! You can now log in.'); // Show success message
+        setUsername('');
         window.location.href = '/login'; // Redirect to login
       } else {
         setError('Registration failed. Username or email may be taken.');

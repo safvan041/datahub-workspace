@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext'; // Import the useAuth hook
 import './Login.css';
+import { toast } from 'react-toastify';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -19,6 +20,8 @@ function Login() {
 
     try {
       await login(username, password);
+      toast.success('Login successful!'); // Show success message
+      setUsername('');
       navigate('/dashboard'); // Redirect to dashboard on success
     } catch (err) {
       setError('Invalid username or password.');

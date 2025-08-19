@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'; // Import Link
 import { useAuth } from './context/AuthContext';
 import CreateRepoForm from './components/CreateRepoForm';
 import './Dashboard.css';
+import { toast } from 'react-toastify';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -23,9 +24,11 @@ function Dashboard() {
         const data = await response.json();
         setRepositories(data);
       } else {
+        toast.error('Failed to fetch repositories.'); // Show error message
         setError('Failed to fetch repositories.');
       }
     } catch (err) {
+      toast.error('Could not connect to the server.'); // Show error message
       setError('Could not connect to the server.');
     } finally {
       setLoading(false);
