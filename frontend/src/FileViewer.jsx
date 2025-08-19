@@ -2,7 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import CommitModal from './components/CommitModal';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import './FileViewer.css';
+
+// Register the components you will use from Chart.js
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const PAGE_SIZE = 50; // Number of rows to fetch per page
 
@@ -10,13 +15,17 @@ function FileViewer() {
   const { fileId } = useParams();
   const { user } = useAuth();
   
-  // State for pagination
+  // States for different views
+  const [activeTab, setActiveTab] = useState('data'); // 'data', 'profile', 'visualize'
+  const [profileData, setProfileData] = useState(null);
+  const [visualizationData, setVisualizationData] = useState(null);
+  const [selectedColumn, setSelectedColumn] = useState('');
+
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  // All other existing states
-  const [activeTab, setActiveTab] = useState('data');
-  const [profileData, setProfileData] = useState(null);
+  // Other existing states
   const [originalData, setOriginalData] = useState([]);
   const [cleanedData, setCleanedData] = useState(null);
   const [headers, setHeaders] = useState([]);
@@ -143,6 +152,42 @@ function FileViewer() {
     }
   };
 
+  const handleVisualize = async () => {
+    if (!selectedColumn) {
+        alert("Please select a column to visualize.");
+        return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+        const response = await fetch(`http://localhost:8080/api/files/${fileId}/visualize`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': user.authHeader,
+            },
+            body: JSON.stringify({ columnName: selectedColumn }),
+        });
+        if (response.ok) {
+            const data = await response.json();
+            setVisualizationData({
+                labels: data.labels,
+                datasets: [{
+                    label: `Value Counts for ${selectedColumn}`,
+                    data: data.values,
+                    backgroundColor: 'rgba(53, 162, 235, 0.5)',
+                }]
+            });
+        } else {
+            setError('Failed to generate visualization.');
+        }
+    } catch (err) {
+        setError('Could not connect to the server.');
+    } finally {
+        setLoading(false);
+    }
+  };
+
   return (
     <div className="file-viewer-container">
       {showCommitModal && (
@@ -166,6 +211,7 @@ function FileViewer() {
                 <div className="tabs">
                     <button className={`tab-button ${activeTab === 'data' ? 'active' : ''}`} onClick={() => setActiveTab('data')}>Data View</button>
                     <button className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => { setActiveTab('profile'); fetchProfileData(); }}>Profile View</button>
+                    <button className={`tab-button ${activeTab === 'visualize' ? 'active' : ''}`} onClick={() => setActiveTab('visualize')}>Visualize</button>
                 </div>
 
                 {activeTab === 'data' && (
@@ -268,6 +314,24 @@ function FileViewer() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {activeTab === 'visualize' && (
+                    <div className="visualize-panel">
+                        <h2>Visualize Column Data</h2>
+                        <div className="visualize-controls">
+                            <select value={selectedColumn} onChange={(e) => setSelectedColumn(e.target.value)}>
+                                <option value="">-- Select a Column --</option>
+                                {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                            </select>
+                            <button onClick={handleVisualize} disabled={!selectedColumn || loading}>
+                                {loading ? 'Generating...' : 'Generate Chart'}
+                            </button>
+                        </div>
+                        <div className="chart-container">
+                            {visualizationData ? <Bar data={visualizationData} /> : <p>Select a column and click "Generate Chart" to see a visualization.</p>}
+                        </div>
                     </div>
                 )}
             </div>

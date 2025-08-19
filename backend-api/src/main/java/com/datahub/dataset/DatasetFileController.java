@@ -197,6 +197,35 @@ public class DatasetFileController {
         // 3. Call the Python service and return its response
         return restTemplate.postForObject(dataEngineUrl, request, Object.class);
     }
+
+    @PostMapping("/api/files/{fileId}/visualize")
+    public Object getVisualizationData(
+        @PathVariable UUID fileId,
+        @RequestBody VisualizeRequestBody body,
+        @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        // 1. Security check
+        DatasetFile file = datasetFileRepository.findByIdWithRepoAndOwner(fileId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found"));
+
+        if (!file.getRepository().getOwner().getUsername().equals(userDetails.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to visualize this file");
+        }
+
+        // 2. Prepare request to Python data-engine
+        String dataEngineUrl = "http://localhost:8000/visualize";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, String> requestBody = Map.of(
+            "file_path", file.getFilePath(),
+            "column_name", body.getColumnName()
+        );
+        HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
+
+        // 3. Call Python service and return its response
+        return restTemplate.postForObject(dataEngineUrl, request, Object.class);
+    }
 }
 
 // DTO Classes
@@ -213,4 +242,10 @@ class CleaningRequestBody {
     private String script;
     public String getScript() { return script; }
     public void setScript(String script) { this.script = script; }
+}
+
+class VisualizeRequestBody{
+    private String columnName;
+    public String getColumnName() { return columnName; }
+    public void setColumnName(String columnName) { this.columnName = columnName; }
 }
