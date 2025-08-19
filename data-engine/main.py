@@ -69,6 +69,10 @@ class PaginatedViewRequest(BaseModel):
     page: int
     size: int
 
+class VisualizeRequest(BaseModel):
+    file_path: str
+    column_name: str
+
 @app.post("/view/paginated")
 def get_paginated_view(payload: PaginatedViewRequest):
     try:
@@ -90,3 +94,25 @@ def get_paginated_view(payload: PaginatedViewRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+
+@app.post("/visualize")
+def get_visualization_data(payload: VisualizeRequest):
+    try:
+        df = pd.read_csv(payload.file_path)
+
+        if payload.column_name not in df.columns:
+            raise HTTPException(status_code=404, detail=f"Column '{payload.column_name}' not found.")
+
+        # Calculate value counts for the specified column
+        value_counts = df[payload.column_name].value_counts().reset_index()
+        value_counts.columns = ['label', 'value']
+
+        # Limit to top 20 for readability
+        top_20_data = value_counts.head(20)
+
+        return {
+            "labels": top_20_data['label'].tolist(),
+            "values": top_20_data['value'].tolist()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating visualization data: {str(e)}")
