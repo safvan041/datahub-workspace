@@ -1,5 +1,6 @@
 package com.datahub.repo;
 
+import com.datahub.repo.RepoDashboardDTO;
 import com.datahub.dataset.DatasetFile;
 import com.datahub.dataset.DatasetFileRepository;
 import com.datahub.storage.FileStorageService;
@@ -97,6 +98,14 @@ public class RepositoryController {
         
         // Then, return the files for that repository
         return datasetFileRepository.findByRepositoryId(repo.getId());
+    }
+
+    @GetMapping("/api/repos/dashboard")
+    public List<RepoDashboardDTO> getDashboardRepositories(@AuthenticationPrincipal UserDetails userDetails) {
+        User owner = userRepository.findByUsername(userDetails.getUsername())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        return dataRepositoryRepository.findDashboardInfoByOwnerId(owner.getId());
     }
 }
 

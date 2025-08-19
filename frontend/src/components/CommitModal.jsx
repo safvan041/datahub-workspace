@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import './CreateRepoForm.css'; // We can reuse the same modal styles
+import { toast } from 'react-toastify';
 
 function CommitModal({ fileId, script, onClose, onCommitSuccess }) {
   const [commitMessage, setCommitMessage] = useState('');
@@ -30,7 +31,7 @@ function CommitModal({ fileId, script, onClose, onCommitSuccess }) {
       });
 
       if (response.ok) {
-        alert("Commit successful!");
+        toast.success('Changes committed successfully!');
         onCommitSuccess(); // Notify parent component
         onClose(); // Close the modal
       } else {
